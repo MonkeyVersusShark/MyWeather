@@ -442,35 +442,6 @@ namespace MyWeatherApp
         }
 
         /*
-         * 添加收藏
-         */
-        private void addFavourite(object sender, RoutedEventArgs e)
-        {
-            if (NewPage2.userName == "")
-            {
-                var i = new MessageDialog("未登录").ShowAsync();
-                return;
-            }
-
-        
-            if (currentCity == "")
-            {
-                var i = new MessageDialog("未选中收藏地点").ShowAsync();
-            } else
-            {
-                string id = Guid.NewGuid().ToString();
-                var db = App.connection.getInstance().conn;
-                using (var statement = db.Prepare("INSERT INTO Favourites (Id, UserName, City) VALUES (?, ?, ?)"))
-                {
-                    statement.Bind(1, id);
-                    statement.Bind(2, NewPage2.userName);
-                    statement.Bind(3, currentCity);
-                    statement.Step();
-                }
-            }
-        }
-
-        /*
          * 显示收藏
          */
         private void showCollection(object sender, RoutedEventArgs e)
