@@ -60,7 +60,30 @@ namespace MyWeatherApp
          */
         private async void selectPicture(object sender, RoutedEventArgs e)
         {
-            // to complete
+            FileOpenPicker Picker = new FileOpenPicker();
+            Picker.ViewMode = PickerViewMode.List;
+            Picker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+            Picker.FileTypeFilter.Add(".jpg");
+            Picker.FileTypeFilter.Add(".png");
+            Picker.FileTypeFilter.Add(".jpeg");
+            StorageFile file = await Picker.PickSingleFileAsync();
+            if (file != null)
+            {
+                using (IRandomAccessStream fileStream = await file.OpenAsync(Windows.Storage.FileAccessMode.Read))
+                {
+                    BitmapImage bitmapImage = new BitmapImage();
+                    //这里是选定的图片的宽度，根据UI修改一下
+                    //bitmapImage.DecodePixelWidth = 400;
+                    await bitmapImage.SetSourceAsync(fileStream);
+                    //图片控件的名称为Icon
+                    Icon.Source = bitmapImage;
+
+                }
+            }
+            else
+            {
+                var message = new MessageDialog("Did not Pick anything !").ShowAsync();
+            }
         }
 
         /*
