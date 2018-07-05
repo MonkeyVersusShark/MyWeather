@@ -47,7 +47,34 @@ namespace MyWeatherApp
          */
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            // to complete
+            Frame rootFrame = Window.Current.Content as Frame;
+      /*      if (rootFrame.CanGoBack)
+            {
+                // Show UI in title bar if opted-in and in-app backstack is not empty.
+                SystemNavigationManager.GetForCurrentView().AppViewBackButtonVisibility =
+                    AppViewBackButtonVisibility.Visible;
+            }
+            else
+            {
+                // Remove the UI from the title bar if in-app back stack is empty.
+                SystemNavigationManager.GetForCurrentView().AppViewBackButtonVisibility =
+                    AppViewBackButtonVisibility.Collapsed;
+            }*/
+
+            base.OnNavigatedTo(e);
+            if (e.NavigationMode == NavigationMode.New)
+            {
+                ApplicationData.Current.LocalSettings.Values.Remove("TheWorkInProgress");
+            }
+            else
+            {
+                if (ApplicationData.Current.LocalSettings.Values.ContainsKey("TheWorkInProgress"))
+                {
+                    var composite = ApplicationData.Current.LocalSettings.Values["TheWorkInProgress"] as ApplicationDataCompositeValue;
+                    mapSearchBlock.Text = (string)composite["mapSearchBlock"];
+                    ApplicationData.Current.LocalSettings.Values.Remove("TheWorkInProgress");
+                }
+            }
         }
 
         /*
@@ -55,7 +82,15 @@ namespace MyWeatherApp
          */
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            // to complete
+            base.OnNavigatedFrom(e);
+
+            bool suspending = ((App)App.Current).isSuspended;
+            if (suspending)
+            {
+                var composite = new ApplicationDataCompositeValue();
+                composite["mapSearchBlock"] = mapSearchBlock.Text;
+                ApplicationData.Current.LocalSettings.Values["TheWorkInProgress"] = composite;
+            }
         }
 
         /*
