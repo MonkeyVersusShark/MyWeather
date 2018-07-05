@@ -50,7 +50,39 @@ namespace MyWeatherApp
          */
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            // to complete
+            Frame rootFrame = Window.Current.Content as Frame;
+        /*    if (rootFrame.CanGoBack)
+            {
+                // Show UI in title bar if opted-in and in-app backstack is not empty.
+                SystemNavigationManager.GetForCurrentView().AppViewBackButtonVisibility =
+                    AppViewBackButtonVisibility.Visible;
+            }
+            else
+            {
+                // Remove the UI from the title bar if in-app back stack is empty.
+                SystemNavigationManager.GetForCurrentView().AppViewBackButtonVisibility =
+                    AppViewBackButtonVisibility.Collapsed;
+            }*/
+
+            base.OnNavigatedTo(e);
+            if (e.NavigationMode == NavigationMode.New)
+            {
+                ApplicationData.Current.LocalSettings.Values.Remove("TheWorkInProgress");
+            }
+            else
+            {
+                if (ApplicationData.Current.LocalSettings.Values.ContainsKey("TheWorkInProgress"))
+                {
+                    var composite = ApplicationData.Current.LocalSettings.Values["TheWorkInProgress"] as ApplicationDataCompositeValue;
+                    weatherSearchBlock.Text = (string)composite["weatherSearchBlock"];
+                    currentWeatherBlock.Text = (string)composite["currentWeatherBlock"];
+                    weatherForcast1.Text = (string)composite["weatherForcast1"];
+                    weatherForcast2.Text = (string)composite["weatherForcast2"];
+                    ApplicationData.Current.LocalSettings.Values.Remove("TheWorkInProgress");
+                }
+            }
+
+            DataTransferManager.GetForCurrentView().DataRequested += OnShareRequested;
         }
 
 
@@ -59,7 +91,20 @@ namespace MyWeatherApp
          */
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            // to complete
+            base.OnNavigatedFrom(e);
+
+            bool suspending = ((App)App.Current).isSuspended;
+            if (suspending)
+            {
+                var composite = new ApplicationDataCompositeValue();
+                composite["weatherSearchBlock"] = weatherSearchBlock.Text;
+                composite["currentWeatherBlock"] = currentWeatherBlock.Text;
+                composite["weatherForcast1"] = weatherForcast1.Text;
+                composite["weatherForcast2"] = weatherForcast1.Text;
+                ApplicationData.Current.LocalSettings.Values["TheWorkInProgress"] = composite;
+            }
+
+            DataTransferManager.GetForCurrentView().DataRequested -= OnShareRequested;
         }
 
         /*
@@ -75,7 +120,19 @@ namespace MyWeatherApp
          */
         private async void OnShareRequested(DataTransferManager sender, DataRequestedEventArgs args)
         {
-            // to complete
+            DataPackage data = args.Request.Data;
+            if (currentWeatherBlock.Text != "")
+            {
+                data.Properties.Title = "天气实况";
+                data.Properties.Description = currentWeatherBlock.Text;
+                data.SetText(currentWeatherBlock.Text);
+                StorageFile imageFile = await Package.Current.InstalledLocation.GetFileAsync("Assets\\background.jpg");
+                data.Properties.Thumbnail = RandomAccessStreamReference.CreateFromFile(imageFile);
+                data.SetBitmap(RandomAccessStreamReference.CreateFromFile(imageFile));
+            } else
+            {
+                var i = new MessageDialog("无可用分享").ShowAsync();
+            }
         }
 
         /*
@@ -438,6 +495,35 @@ namespace MyWeatherApp
                 string id = a.Next(1000).ToString();
                 update.Tag = id;
                 TileUpdateManager.CreateTileUpdaterForApplication().Update(update);
+            }
+        }
+
+        /*
+         * 添加收藏
+         */
+        private void addFavourite(object sender, RoutedEventArgs e)
+        {
+            if (NewPage2.userName == "")
+            {
+                var i = new MessageDialog("未登录").ShowAsync();
+                return;
+            }
+
+        
+            if (currentCity == "")
+            {
+                var i = new MessageDialog("未选中收藏地点").ShowAsync();
+            } else
+            {
+                string id = Guid.NewGuid().ToString();
+                var db = App.connection.getInstance().conn;
+                using (var statement = db.Prepare("INSERT INTO Favourites (Id, UserName, City) VALUES (?, ?, ?)"))
+                {
+                    statement.Bind(1, id);
+                    statement.Bind(2, NewPage2.userName);
+                    statement.Bind(3, currentCity);
+                    statement.Step();
+                }
             }
         }
 
